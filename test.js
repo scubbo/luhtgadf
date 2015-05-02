@@ -1,5 +1,6 @@
 console.log('running');
 var page = require('webpage').create();
+var fs = require('fs');
 var system = require('system');
 var stepIndex = 0;
 var loadInProgress = false;
@@ -39,13 +40,15 @@ page.onCallback = function(data) {
 }
 
 var steps = [
+  loadCookies,
   initialLogin,
   enterApprovalCode,
   wait,
   saveBrowser,
   checkForLoginApproval,
   loadMainPageAndRender,
-  wait
+  wait,
+  saveCookies
 ]
 
 setInterval(function() {
@@ -58,10 +61,26 @@ setInterval(function() {
   }
 }, 2000);
 
+function loadCookies() {
+  cookiesPath = 'cookies/'
+  if (fs.exists(cookiesPath)) {
+    filelist = fs.list(cookiesPath)
+    for (var i = 0; i<filelist.length; i++) {
+      if (filelist[i][0] == '.') {
+        continue; //Skip special files
+      }
+      cookieContents = fs.read(cookiesPath + filelist[i]);
+      page.addCookie(JSON.parse(cookieContents));
+    }
+  }
+}
+
 function initialLogin() {
   page.open("http://www.facebook.com/login.php", function(status) {
     page.evaluate(function(email, password, p) {
-        document.querySelector("input[name='email']").value = email;
+        emailInput = document.querySelector("input[name='email']");
+        if (emailInput == null) {return;}//We're logged in already - no need to do this}
+        emailInput.value = email;
         document.querySelector("input[name='pass']").value = password;
 
         document.querySelector("#login_form").submit();
@@ -88,7 +107,9 @@ function enterApprovalCode() {
 
 function saveBrowser() {
   page.evaluate(function() {
-    document.getElementById('checkpointSubmitButton').click();
+    but = document.getElementById('checkpointSubmitButton');
+    if (but == null) {return;}//Already logged in - no need to confirm browser}
+    but.click();
   });
 }
 
@@ -104,7 +125,6 @@ function checkForLoginApproval() {
 function loadMainPageAndRender() {
   page.open('http://www.facebook.com', function(status) {
     page.render('mainpage.png');
-
   });
 }
 
@@ -112,11 +132,14 @@ function wait() {
   //I don't know why, but this seems to be essential...
 }
 
-function enableLoggingOfResponse() {
-  page.onResourceReceived = function(response) {
-    console.log('received resource');
-    console.log('url: ' + response.url);
-    console.log('contentType: ' + response.contentType);
-    console.log('status: ' + response.status);
+function saveCookies() {
+  if (!fs.exists('cookies')) {
+    fs.makeDirectory('cookies');
+  }
+
+  for (var i=0; i<page.cookies.length; i++) {
+    cookie = page.cookies[i];
+    cookieName = cookie['name'];
+    fs.write('cookies/' + cookieName + '.cookie', JSON.stringify(cookie), 'w');
   }
 }
