@@ -46,8 +46,8 @@ var steps = [
   wait,
   saveBrowser,
   checkForLoginApproval,
-  loadMainPageAndRender,
   wait,
+  listUnreadMessages,
   saveCookies
 ]
 
@@ -122,9 +122,17 @@ function checkForLoginApproval() {
   });
 }
 
-function loadMainPageAndRender() {
-  page.open('http://www.facebook.com', function(status) {
-    page.render('mainpage.png');
+function listUnreadMessages() {
+  page.open('http://www.facebook.com/messages', function(status) {
+    page.evaluate(function() {
+      messages = document.querySelector('div[aria-label="List of message threads"] ul').children;
+      for (var i = 0; i<messages.length; i++) {
+        if (messages[i].classList.contains('_kx')) {
+          user = messages[i].querySelector('div._l2 span._l1').innerHTML
+          console.log('you have a new message from ' + user);
+        }
+      }
+    });
   });
 }
 

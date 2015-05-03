@@ -1,0 +1,3 @@
+* Figure out why the `wait` function is required (and remove it if possible!)
+* Refactor to multiple .js files
+* Change behaviour based on whether cookies exist (set up "install" and "run" behaviour)
