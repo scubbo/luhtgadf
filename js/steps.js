@@ -1,5 +1,4 @@
 var system = require('system');
-//var page = require('webpage').create();
 var fs = require('fs');
 
 if (fs.exists('data/replyMessage')) {
@@ -32,8 +31,6 @@ exports.initialLogin = function() {
         document.querySelector("input[name='pass']").value = password;
 
         document.querySelector("#login_form").submit();
-
-        console.log("Login submitted!");
     }, email, password, page);
   });
 }
